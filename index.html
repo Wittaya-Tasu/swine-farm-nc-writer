@@ -1,0 +1,893 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123b73">
+  <meta name="description" content="เครื่องมือช่วยเรียบเรียงรายงานความไม่สอดคล้องสำหรับการตรวจประเมินฟาร์มสุกร">
+  <title>NC Writer – Swine Farm Audit</title>
+  <style>
+    :root {
+      --navy: #0c2f5d;
+      --blue: #1768c4;
+      --blue-2: #eaf3ff;
+      --ink: #17233a;
+      --muted: #607089;
+      --line: #dbe5f1;
+      --paper: #ffffff;
+      --canvas: #f4f7fb;
+      --green: #12815a;
+      --green-bg: #eaf8f2;
+      --amber: #a55d05;
+      --amber-bg: #fff7e7;
+      --red: #b42318;
+      --red-bg: #fff0ee;
+      --shadow: 0 14px 42px rgba(18, 59, 115, .10);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 92% 4%, rgba(41, 124, 219, .12), transparent 26rem),
+        var(--canvas);
+      font-family: "Noto Sans Thai", "Leelawadee UI", Tahoma, sans-serif;
+      line-height: 1.55;
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    button { cursor: pointer; }
+
+    .skip-link {
+      position: absolute;
+      left: -999px;
+      top: 8px;
+      z-index: 99;
+      background: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+
+    .skip-link:focus { left: 8px; }
+
+    .app-header {
+      color: white;
+      background: linear-gradient(120deg, #09264d 0%, #124b8b 72%, #1974d5 100%);
+      padding: 26px 20px 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .app-header::after {
+      content: "";
+      position: absolute;
+      width: 290px;
+      height: 290px;
+      border: 42px solid rgba(255,255,255,.07);
+      border-radius: 50%;
+      right: -110px;
+      top: -150px;
+    }
+
+    .header-inner, .app-shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand { display: flex; gap: 15px; align-items: center; }
+
+    .brand-mark {
+      width: 54px;
+      height: 54px;
+      border: 2px solid rgba(255,255,255,.5);
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,.1);
+      font-size: 26px;
+      font-weight: 800;
+    }
+
+    h1 { margin: 0; font-size: clamp(1.55rem, 3vw, 2.3rem); line-height: 1.22; }
+
+    .subtitle { margin: 6px 0 0; color: #dfeeff; font-size: 1rem; }
+
+    .header-badge {
+      color: #e8f3ff;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 999px;
+      padding: 7px 12px;
+      white-space: nowrap;
+      font-size: .86rem;
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: minmax(0, 1.52fr) minmax(310px, .72fr);
+      gap: 22px;
+      align-items: start;
+      padding: 24px 0 54px;
+    }
+
+    .panel {
+      background: var(--paper);
+      border: 1px solid rgba(204, 218, 234, .85);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .form-panel { overflow: hidden; }
+
+    .progress-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-bottom: 1px solid var(--line);
+      background: #fbfdff;
+    }
+
+    .progress-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 13px 8px;
+      color: var(--muted);
+      font-size: .9rem;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .progress-item + .progress-item { border-left: 1px solid var(--line); }
+
+    .step-dot {
+      display: inline-grid;
+      place-items: center;
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      background: #e8eef5;
+      color: #52627a;
+      font-size: .78rem;
+    }
+
+    .progress-item.active { color: var(--blue); background: var(--blue-2); }
+    .progress-item.active .step-dot { color: white; background: var(--blue); }
+
+    form { padding: 22px; }
+
+    .section-card {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 18px;
+      scroll-margin-top: 16px;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .section-title { display: flex; gap: 12px; }
+
+    .section-number {
+      flex: 0 0 auto;
+      width: 34px;
+      height: 34px;
+      border-radius: 11px;
+      display: grid;
+      place-items: center;
+      color: white;
+      background: var(--blue);
+      font-weight: 800;
+    }
+
+    h2 { margin: 0; font-size: 1.13rem; line-height: 1.3; }
+    .hint { margin: 4px 0 0; color: var(--muted); font-size: .89rem; }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1.15fr .8fr .8fr; gap: 16px; }
+    .full { grid-column: 1 / -1; }
+
+    .field { min-width: 0; }
+    label, .field-label { display: block; margin-bottom: 7px; font-weight: 700; font-size: .92rem; }
+    .required::after { content: " *"; color: var(--red); }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid #c9d6e5;
+      border-radius: 10px;
+      color: var(--ink);
+      background: white;
+      padding: 10px 12px;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    textarea { min-height: 105px; resize: vertical; }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(23, 104, 196, .14);
+    }
+
+    [aria-invalid="true"] { border-color: var(--red); background: #fffafa; }
+
+    .field-help { margin: 6px 0 0; font-size: .79rem; color: var(--muted); }
+
+    .check-grid { display: flex; flex-wrap: wrap; gap: 9px; }
+
+    .check-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border: 1px solid #cbd8e7;
+      border-radius: 999px;
+      color: #34445d;
+      background: #fbfdff;
+      font-weight: 600;
+      user-select: none;
+    }
+
+    .check-pill:has(input:checked) { border-color: var(--blue); color: var(--blue); background: var(--blue-2); }
+    .check-pill input { width: auto; accent-color: var(--blue); }
+
+    .warning-box {
+      display: none;
+      margin-top: 12px;
+      border: 1px solid #f0cd8e;
+      border-radius: 11px;
+      padding: 11px 13px;
+      color: #734510;
+      background: var(--amber-bg);
+      font-size: .86rem;
+    }
+
+    .warning-box.show { display: block; }
+    .warning-box strong { color: var(--amber); }
+
+    .form-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 5px;
+    }
+
+    .action-group { display: flex; gap: 9px; flex-wrap: wrap; }
+
+    .btn {
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 10px 15px;
+      font-weight: 750;
+      transition: transform .1s, box-shadow .15s, background .15s;
+    }
+
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { color: white; background: var(--blue); box-shadow: 0 7px 18px rgba(23, 104, 196, .23); }
+    .btn-primary:hover { background: #0f59ab; }
+    .btn-secondary { color: #26405f; background: white; border-color: #c9d6e5; }
+    .btn-secondary:hover { background: #f5f8fc; }
+    .btn-ghost { color: #5a6980; background: transparent; }
+    .btn-ghost:hover { background: #eef3f8; }
+
+    .result-panel {
+      position: sticky;
+      top: 16px;
+      overflow: hidden;
+    }
+
+    .result-head {
+      color: white;
+      background: linear-gradient(110deg, var(--navy), #165ca7);
+      padding: 18px 20px;
+    }
+
+    .result-head h2 { font-size: 1.12rem; }
+    .result-head p { margin: 4px 0 0; color: #ddecff; font-size: .83rem; }
+    .result-body { padding: 18px; }
+
+    .quality-meter {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 11px;
+      color: #40516b;
+      background: #f2f6fb;
+      margin-bottom: 14px;
+      font-size: .86rem;
+    }
+
+    .quality-meter.ready { color: #086343; background: var(--green-bg); }
+    .quality-score { font-weight: 800; white-space: nowrap; }
+
+    .result-empty {
+      min-height: 210px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed #c8d6e6;
+      border-radius: 13px;
+      padding: 28px 18px;
+    }
+
+    .empty-icon { font-size: 2rem; margin-bottom: 7px; }
+    .result-content[hidden], .result-empty[hidden] { display: none; }
+
+    .result-block {
+      border-left: 4px solid var(--blue);
+      border-radius: 0 10px 10px 0;
+      background: #f7faff;
+      padding: 11px 12px;
+      margin-bottom: 10px;
+    }
+
+    .result-block.evidence { border-color: #5b78a0; }
+    .result-block.conclusion { border-color: var(--amber); background: #fffaf1; }
+    .result-label { display: block; color: var(--blue); font-size: .78rem; font-weight: 800; margin-bottom: 4px; }
+    .result-block.evidence .result-label { color: #526b8e; }
+    .result-block.conclusion .result-label { color: var(--amber); }
+    .result-text { margin: 0; font-size: .91rem; white-space: pre-wrap; }
+
+    .complete-output {
+      margin-top: 15px;
+      border: 1px solid #bad2ef;
+      border-radius: 13px;
+      background: #edf5ff;
+      padding: 14px;
+    }
+
+    .complete-output h3 { margin: 0 0 7px; font-size: .92rem; color: var(--navy); }
+    .complete-output p { margin: 0; font-size: .94rem; white-space: pre-wrap; }
+
+    .result-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 14px; }
+    .result-actions .btn:last-child { grid-column: 1 / -1; }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translate(-50%, 20px);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      color: white;
+      background: #173455;
+      border-radius: 10px;
+      padding: 10px 15px;
+      box-shadow: 0 10px 28px rgba(0,0,0,.22);
+      transition: opacity .2s, transform .2s;
+    }
+
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    .footer-note {
+      color: var(--muted);
+      text-align: center;
+      font-size: .8rem;
+      padding: 0 16px 26px;
+    }
+
+    @media (max-width: 900px) {
+      .app-shell { grid-template-columns: 1fr; }
+      .result-panel { position: static; }
+    }
+
+    @media (max-width: 650px) {
+      .header-inner, .app-shell { width: min(100% - 20px, 1180px); }
+      .brand-row { flex-direction: column; }
+      .header-badge { white-space: normal; }
+      .progress-item { flex-direction: column; gap: 4px; font-size: .76rem; }
+      form { padding: 12px; }
+      .section-card { padding: 15px; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .form-actions { align-items: stretch; flex-direction: column-reverse; }
+      .action-group { display: grid; grid-template-columns: 1fr 1fr; }
+      .action-group .btn-primary { grid-column: 1 / -1; }
+      .result-actions { grid-template-columns: 1fr; }
+      .result-actions .btn:last-child { grid-column: auto; }
+    }
+
+    @media print {
+      body { background: white; }
+      .app-header, .form-panel, .footer-note, .result-actions, .quality-meter { display: none !important; }
+      .app-shell { display: block; width: 100%; padding: 0; }
+      .result-panel { position: static; border: 0; box-shadow: none; }
+      .result-head { color: #111; background: white; border-bottom: 2px solid #111; }
+      .result-head p { color: #444; }
+      .result-empty { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#nc-form">ข้ามไปยังแบบฟอร์ม</a>
+
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand-row">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">NC</div>
+          <div>
+            <h1>NC Writer – Swine Farm Audit</h1>
+            <p class="subtitle">ผู้ช่วยเรียบเรียงรายงานความไม่สอดคล้องสำหรับการตรวจฟาร์มสุกร</p>
+          </div>
+        </div>
+        <div class="header-badge">Requirement + Evidence + Nonconformity</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section class="panel form-panel" aria-label="แบบฟอร์มสร้างรายงาน NC">
+      <div class="progress-bar" aria-label="ขั้นตอนการกรอกข้อมูล">
+        <div class="progress-item active"><span class="step-dot">1</span><span>ข้อกำหนด</span></div>
+        <div class="progress-item"><span class="step-dot">2</span><span>หลักฐาน</span></div>
+        <div class="progress-item"><span class="step-dot">3</span><span>ข้อความ NC</span></div>
+      </div>
+
+      <form id="nc-form" novalidate>
+        <section class="section-card" id="requirement-section">
+          <div class="section-heading">
+            <div class="section-title">
+              <span class="section-number">1</span>
+              <div>
+                <h2>Requirement — ข้อกำหนด</h2>
+                <p class="hint">ระบุแหล่งอ้างอิงและสิ่งที่ฟาร์มต้องปฏิบัติ</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <div class="field">
+              <label class="required" for="source-type">ประเภทข้อกำหนด</label>
+              <select id="source-type" name="sourceType" required>
+                <option value="">เลือกประเภท</option>
+                <option>มาตรฐาน</option>
+                <option>กฎหมาย</option>
+                <option>Procedure</option>
+                <option>WI</option>
+                <option>คู่มือ</option>
+                <option value="อื่น ๆ">อื่น ๆ</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="required" for="document-name">ชื่อข้อกำหนด/เอกสาร</label>
+              <input id="document-name" name="documentName" required placeholder="เช่น คู่มือการจัดเก็บวัคซีน">
+            </div>
+            <div class="field">
+              <label for="document-number">เลขที่เอกสาร</label>
+              <input id="document-number" name="documentNumber" placeholder="เช่น WI-VET-01">
+            </div>
+            <div class="field">
+              <label class="required" for="clause">ข้อ/หัวข้ออ้างอิง</label>
+              <input id="clause" name="clause" required placeholder="เช่น 4.2">
+            </div>
+            <div class="field full">
+              <label class="required" for="requirement-detail">ข้อกำหนดระบุให้ทำอะไร</label>
+              <textarea id="requirement-detail" name="requirementDetail" required placeholder="พิมพ์สาระสำคัญตามข้อกำหนด โดยไม่ตีความเพิ่ม"></textarea>
+              <p class="field-help">ไม่ต้องขึ้นต้นด้วย “กำหนดให้” ระบบจะเติมให้โดยอัตโนมัติ</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="section-card" id="evidence-section">
+          <div class="section-heading">
+            <div class="section-title">
+              <span class="section-number">2</span>
+              <div>
+                <h2>Objective Evidence — หลักฐานที่ตรวจพบ</h2>
+                <p class="hint">เขียนเฉพาะข้อเท็จจริงที่เห็น ตรวจสอบ หรือยืนยันได้</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="field full">
+              <span class="field-label required">วิธีที่ใช้ตรวจสอบ</span>
+              <div class="check-grid" role="group" aria-label="วิธีที่ใช้ตรวจสอบ">
+                <label class="check-pill"><input type="checkbox" name="method" value="ตรวจเอกสาร">ตรวจเอกสาร</label>
+                <label class="check-pill"><input type="checkbox" name="method" value="สัมภาษณ์">สัมภาษณ์</label>
+                <label class="check-pill"><input type="checkbox" name="method" value="สังเกตการณ์">สังเกตการณ์</label>
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="required" for="audit-date">วันที่ตรวจพบ</label>
+              <input id="audit-date" name="auditDate" type="date" required>
+            </div>
+            <div class="field">
+              <label for="audit-time">เวลา</label>
+              <input id="audit-time" name="auditTime" type="time">
+            </div>
+            <div class="field full">
+              <label class="required" for="location">สถานที่/จุดที่ตรวจพบ</label>
+              <input id="location" name="location" required placeholder="เช่น ห้องเวชภัณฑ์ ฟาร์ม...">
+            </div>
+            <div class="field">
+              <label for="subject">สิ่งที่ตรวจสอบ</label>
+              <input id="subject" name="subject" placeholder="เช่น บันทึกอุณหภูมิตู้เก็บวัคซีน เดือน...">
+            </div>
+            <div class="field">
+              <label for="sample-size">จำนวนตัวอย่าง/ขอบเขต</label>
+              <input id="sample-size" name="sampleSize" placeholder="เช่น 3 โรงเรือน หรือ 12 รายการ">
+            </div>
+            <div class="field full">
+              <label class="required" for="evidence-detail">ข้อเท็จจริงที่ตรวจพบ</label>
+              <textarea id="evidence-detail" name="evidenceDetail" required placeholder="เช่น ไม่มีการบันทึกอุณหภูมิในวันที่... รวม...วัน"></textarea>
+              <p class="field-help">ไม่ต้องขึ้นต้นด้วย “พบว่า” และไม่ใส่สาเหตุ ผู้รับผิด หรือวิธีแก้ไข</p>
+              <div class="warning-box" id="language-warning" role="alert"></div>
+            </div>
+          </div>
+        </section>
+
+        <div class="form-actions">
+          <button class="btn btn-ghost" type="button" id="reset-btn">ล้างข้อมูล</button>
+          <div class="action-group">
+            <button class="btn btn-secondary" type="button" id="sample-btn">ดูตัวอย่าง</button>
+            <button class="btn btn-primary" type="submit">ประมวลผลข้อความ NC</button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <aside class="panel result-panel" aria-live="polite" aria-label="ผลลัพธ์ข้อความ NC">
+      <div class="result-head">
+        <h2>ข้อความรายงาน NC</h2>
+        <p>ระบบจะประกอบข้อมูลตามโครงสร้างที่ถูกต้อง</p>
+      </div>
+      <div class="result-body">
+        <div class="quality-meter" id="quality-meter">
+          <span id="quality-text">กรอกข้อมูลที่จำเป็นให้ครบ</span>
+          <span class="quality-score" id="quality-score">0/3</span>
+        </div>
+
+        <div class="result-empty" id="result-empty">
+          <div>
+            <div class="empty-icon" aria-hidden="true">◎</div>
+            <strong>ยังไม่มีข้อความ NC</strong>
+            <div>กรอกข้อกำหนดและหลักฐาน แล้วกดประมวลผล</div>
+          </div>
+        </div>
+
+        <div class="result-content" id="result-content" hidden>
+          <div class="result-block">
+            <span class="result-label">1 · REQUIREMENT</span>
+            <p class="result-text" id="result-requirement"></p>
+          </div>
+          <div class="result-block evidence">
+            <span class="result-label">2 · OBJECTIVE EVIDENCE</span>
+            <p class="result-text" id="result-evidence"></p>
+          </div>
+          <div class="result-block conclusion">
+            <span class="result-label">3 · STATEMENT OF NONCONFORMITY</span>
+            <p class="result-text" id="result-conclusion"></p>
+          </div>
+
+          <div class="complete-output">
+            <h3>ข้อความฉบับสมบูรณ์</h3>
+            <p id="result-complete"></p>
+          </div>
+
+          <div class="result-actions">
+            <button class="btn btn-primary" type="button" id="copy-btn">คัดลอกข้อความ</button>
+            <button class="btn btn-secondary" type="button" id="download-btn">ดาวน์โหลด .txt</button>
+            <button class="btn btn-secondary" type="button" id="print-btn">พิมพ์ / บันทึก PDF</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <p class="footer-note">ข้อมูลแบบร่างจัดเก็บเฉพาะในเบราว์เซอร์เครื่องนี้ · โปรดตรวจสอบข้อกำหนดและหลักฐานก่อนนำข้อความไปออกรายงาน</p>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const form = document.getElementById("nc-form");
+      const warningBox = document.getElementById("language-warning");
+      const emptyState = document.getElementById("result-empty");
+      const resultContent = document.getElementById("result-content");
+      const qualityMeter = document.getElementById("quality-meter");
+      const qualityText = document.getElementById("quality-text");
+      const qualityScore = document.getElementById("quality-score");
+      const toast = document.getElementById("toast");
+
+      const output = {
+        requirement: document.getElementById("result-requirement"),
+        evidence: document.getElementById("result-evidence"),
+        conclusion: document.getElementById("result-conclusion"),
+        complete: document.getElementById("result-complete")
+      };
+
+      const watchWords = [
+        { term: "น่าจะ", reason: "เป็นการคาดเดา" },
+        { term: "อาจจะ", reason: "เป็นการคาดเดา" },
+        { term: "รู้สึกว่า", reason: "เป็นความคิดเห็นส่วนตัว" },
+        { term: "เข้าใจว่า", reason: "ไม่ใช่หลักฐานโดยตรง" },
+        { term: "ขาดความตั้งใจ", reason: "เป็นการสรุปเจตนา" },
+        { term: "ไม่มีประสิทธิภาพ", reason: "กว้างและวัดผลไม่ได้" },
+        { term: "ควรแก้ไข", reason: "เป็นแนวทางแก้ไข ไม่ใช่ข้อเท็จจริง" },
+        { term: "ควรอบรม", reason: "เป็นแนวทางแก้ไข ไม่ใช่ข้อเท็จจริง" },
+        { term: "โดยเร็ว", reason: "เป็นคำแนะนำ ไม่ใช่หลักฐาน" },
+        { term: "เนื่องจาก", reason: "อาจเป็นการระบุสาเหตุที่ยังไม่ได้วิเคราะห์" },
+        { term: "เพราะว่า", reason: "อาจเป็นการระบุสาเหตุที่ยังไม่ได้วิเคราะห์" }
+      ];
+
+      const requiredIds = ["source-type", "document-name", "clause", "requirement-detail", "audit-date", "location", "evidence-detail"];
+      let currentText = "";
+      let toastTimer;
+
+      function compact(text) {
+        return String(text || "").replace(/\s+/g, " ").trim().replace(/[.。]+$/, "");
+      }
+
+      function cleanRequirement(text) {
+        return compact(text).replace(/^ตามข้อกำหนด\s*/i, "").replace(/^กำหนดให้\s*/i, "").replace(/^ให้\s*/i, "");
+      }
+
+      function cleanEvidence(text) {
+        return compact(text).replace(/^จากการ\s*/i, "").replace(/^พบว่า\s*/i, "");
+      }
+
+      function joinThai(items) {
+        if (items.length <= 1) return items[0] || "";
+        if (items.length === 2) return items.join("และ");
+        return `${items.slice(0, -1).join(" ")} และ${items.at(-1)}`;
+      }
+
+      function formatThaiDate(value) {
+        if (!value) return "";
+        const [year, month, day] = value.split("-").map(Number);
+        const date = new Date(year, month - 1, day);
+        return new Intl.DateTimeFormat("th-TH", { day: "numeric", month: "long", year: "numeric" }).format(date);
+      }
+
+      function buildReference(data) {
+        const type = data.sourceType === "อื่น ๆ" ? "" : data.sourceType;
+        const number = data.documentNumber ? ` เลขที่ ${compact(data.documentNumber)}` : "";
+        return `${type ? ` ${type}` : ""} ${compact(data.documentName)}${number}`.replace(/\s+/g, " ");
+      }
+
+      function getData() {
+        const data = Object.fromEntries(new FormData(form).entries());
+        data.methods = [...form.querySelectorAll('input[name="method"]:checked')].map(item => item.value);
+        return data;
+      }
+
+      function findWarnings(text) {
+        return watchWords.filter(item => text.includes(item.term));
+      }
+
+      function updateWarning() {
+        const warnings = findWarnings(document.getElementById("evidence-detail").value);
+        if (!warnings.length) {
+          warningBox.classList.remove("show");
+          warningBox.innerHTML = "";
+          return;
+        }
+        warningBox.innerHTML = `<strong>พบคำที่ควรตรวจสอบ:</strong> ${warnings.map(item => `“${item.term}” (${item.reason})`).join(", ")} — ระบบยังให้ประมวลผลได้ แต่ควรแก้เป็นข้อเท็จจริงที่ตรวจสอบได้`;
+        warningBox.classList.add("show");
+      }
+
+      function validate() {
+        let valid = true;
+        let firstInvalid = null;
+        requiredIds.forEach(id => {
+          const field = document.getElementById(id);
+          const fieldValid = Boolean(field.value.trim());
+          field.setAttribute("aria-invalid", String(!fieldValid));
+          if (!fieldValid && !firstInvalid) firstInvalid = field;
+          valid = valid && fieldValid;
+        });
+
+        const methods = form.querySelectorAll('input[name="method"]:checked');
+        if (!methods.length) {
+          valid = false;
+          if (!firstInvalid) firstInvalid = form.querySelector('input[name="method"]');
+        }
+
+        if (!valid && firstInvalid) {
+          firstInvalid.focus();
+          showToast("กรุณากรอกข้อมูลที่มีเครื่องหมาย * ให้ครบ");
+        }
+        return valid;
+      }
+
+      function updateQuality() {
+        const data = getData();
+        const requirementReady = data.sourceType && data.documentName && data.clause && data.requirementDetail;
+        const evidenceReady = data.methods.length && data.auditDate && data.location && data.evidenceDetail;
+        const languageReady = evidenceReady && findWarnings(data.evidenceDetail).length === 0;
+        const score = [requirementReady, evidenceReady, languageReady].filter(Boolean).length;
+
+        qualityScore.textContent = `${score}/3`;
+        qualityMeter.classList.toggle("ready", score === 3);
+        qualityText.textContent = score === 3
+          ? "ข้อมูลครบและไม่พบคำเตือน"
+          : score === 2
+            ? "ข้อมูลหลักครบ โปรดตรวจคำเตือน"
+            : "กรอกข้อกำหนดและหลักฐานให้ครบ";
+      }
+
+      function generate() {
+        const data = getData();
+        const reference = buildReference(data);
+        const requirementDetail = cleanRequirement(data.requirementDetail);
+        const evidenceDetail = cleanEvidence(data.evidenceDetail);
+        const dateText = formatThaiDate(data.auditDate);
+        const timeText = data.auditTime ? ` เวลา ${data.auditTime.replace(":", ".")} น.` : "";
+        const subjectText = data.subject ? ` โดยตรวจสอบ ${compact(data.subject)}` : "";
+        const sampleText = data.sampleSize ? ` จำนวน ${compact(data.sampleSize)}` : "";
+
+        const requirement = `ตามข้อกำหนด${reference} ข้อ ${compact(data.clause)} กำหนดให้ ${requirementDetail}`;
+        const evidence = `จากการ${joinThai(data.methods)} ณ ${compact(data.location)} เมื่อวันที่ ${dateText}${timeText}${subjectText}${sampleText} พบว่า ${evidenceDetail}`;
+        const conclusion = `จึงไม่เป็นไปตามข้อกำหนด${reference} ข้อ ${compact(data.clause)} ซึ่งกำหนดให้ ${requirementDetail}`;
+        currentText = `${requirement}\n\n${evidence}\n\n${conclusion}`;
+
+        output.requirement.textContent = requirement;
+        output.evidence.textContent = evidence;
+        output.conclusion.textContent = conclusion;
+        output.complete.textContent = currentText;
+        emptyState.hidden = true;
+        resultContent.hidden = false;
+        document.querySelectorAll(".progress-item").forEach(item => item.classList.add("active"));
+        updateQuality();
+        saveDraft();
+
+        if (window.innerWidth <= 900) {
+          document.querySelector(".result-panel").scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+
+      function showToast(message) {
+        clearTimeout(toastTimer);
+        toast.textContent = message;
+        toast.classList.add("show");
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+      }
+
+      async function copyResult() {
+        try {
+          await navigator.clipboard.writeText(currentText);
+          showToast("คัดลอกข้อความ NC แล้ว");
+        } catch (_) {
+          const area = document.createElement("textarea");
+          area.value = currentText;
+          document.body.appendChild(area);
+          area.select();
+          document.execCommand("copy");
+          area.remove();
+          showToast("คัดลอกข้อความ NC แล้ว");
+        }
+      }
+
+      function downloadResult() {
+        const blob = new Blob([`รายงานความไม่สอดคล้อง (NC)\n\n${currentText}\n`], { type: "text/plain;charset=utf-8" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `NC-report-${new Date().toISOString().slice(0, 10)}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(link.href);
+      }
+
+      function saveDraft() {
+        const fields = {};
+        [...form.elements].forEach(field => {
+          if (!field.name) return;
+          if (field.type === "checkbox") {
+            fields[field.value] = field.checked;
+          } else {
+            fields[field.name] = field.value;
+          }
+        });
+        localStorage.setItem("swineNcWriterDraft", JSON.stringify(fields));
+      }
+
+      function restoreDraft() {
+        const raw = localStorage.getItem("swineNcWriterDraft");
+        if (!raw) return;
+        try {
+          const fields = JSON.parse(raw);
+          [...form.elements].forEach(field => {
+            if (!field.name) return;
+            if (field.type === "checkbox") {
+              field.checked = Boolean(fields[field.value]);
+            } else if (fields[field.name] !== undefined) {
+              field.value = fields[field.name];
+            }
+          });
+        } catch (_) {
+          localStorage.removeItem("swineNcWriterDraft");
+        }
+      }
+
+      function fillSample() {
+        document.getElementById("source-type").value = "WI";
+        document.getElementById("document-name").value = "คู่มือการจัดเก็บวัคซีน";
+        document.getElementById("document-number").value = "[เลขที่เอกสาร]";
+        document.getElementById("clause").value = "[เลขข้อ]";
+        document.getElementById("requirement-detail").value = "บันทึกอุณหภูมิตู้เก็บวัคซีนทุกวัน";
+        form.querySelectorAll('input[name="method"]').forEach(item => { item.checked = item.value === "ตรวจเอกสาร"; });
+        document.getElementById("audit-date").value = new Date().toISOString().slice(0, 10);
+        document.getElementById("audit-time").value = "10:30";
+        document.getElementById("location").value = "ห้องเวชภัณฑ์ [ชื่อฟาร์ม]";
+        document.getElementById("subject").value = "บันทึกอุณหภูมิตู้เก็บวัคซีนประจำเดือน [เดือน/ปี]";
+        document.getElementById("sample-size").value = "[จำนวนรายการที่ตรวจ]";
+        document.getElementById("evidence-detail").value = "ไม่มีการบันทึกอุณหภูมิในวันที่ [ระบุวันที่] รวม [จำนวน] วัน";
+        updateWarning();
+        updateQuality();
+        saveDraft();
+        showToast("ใส่ข้อมูลตัวอย่างแล้ว โปรดแทนที่ข้อความใน [วงเล็บ]");
+      }
+
+      form.addEventListener("submit", event => {
+        event.preventDefault();
+        updateWarning();
+        if (validate()) generate();
+      });
+
+      form.addEventListener("input", event => {
+        if (event.target.matches("input, select, textarea")) event.target.removeAttribute("aria-invalid");
+        updateWarning();
+        updateQuality();
+        saveDraft();
+      });
+
+      form.addEventListener("change", () => {
+        updateQuality();
+        saveDraft();
+      });
+
+      document.getElementById("sample-btn").addEventListener("click", fillSample);
+      document.getElementById("copy-btn").addEventListener("click", copyResult);
+      document.getElementById("download-btn").addEventListener("click", downloadResult);
+      document.getElementById("print-btn").addEventListener("click", () => window.print());
+      document.getElementById("reset-btn").addEventListener("click", () => {
+        if (!window.confirm("ต้องการล้างข้อมูลทั้งหมดใช่หรือไม่?")) return;
+        form.reset();
+        localStorage.removeItem("swineNcWriterDraft");
+        currentText = "";
+        resultContent.hidden = true;
+        emptyState.hidden = false;
+        warningBox.classList.remove("show");
+        document.querySelectorAll("[aria-invalid]").forEach(item => item.removeAttribute("aria-invalid"));
+        document.querySelectorAll(".progress-item").forEach((item, index) => item.classList.toggle("active", index === 0));
+        updateQuality();
+        showToast("ล้างข้อมูลแล้ว");
+      });
+
+      restoreDraft();
+      updateWarning();
+      updateQuality();
+    })();
+  </script>
+</body>
+</html>
