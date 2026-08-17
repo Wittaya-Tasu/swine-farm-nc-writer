@@ -648,7 +648,12 @@
       }
 
       function cleanRequirement(text) {
-        return compact(text).replace(/^ตามข้อกำหนด\s*/i, "").replace(/^กำหนดให้\s*/i, "").replace(/^ให้\s*/i, "");
+        return compact(text)
+          .replace(/^ตามข้อกำหนด\s*/i, "")
+          .replace(/^กำหนดให้\s*/i, "")
+          .replace(/^[-–—•▪●*]+\s*/, "")
+          .replace(/^ให้\s*/i, "")
+          .trim();
       }
 
       function cleanEvidence(text) {
@@ -747,7 +752,7 @@
 
         const requirement = `ตามข้อกำหนด${reference} ข้อ ${compact(data.clause)} กำหนดให้ ${requirementDetail}`;
         const evidence = `จากการ${joinThai(data.methods)} ณ ${compact(data.location)} เมื่อวันที่ ${dateText}${timeText}${subjectText}${sampleText} พบว่า ${evidenceDetail}`;
-        const conclusion = `จึงไม่เป็นไปตามข้อกำหนด${reference} ข้อ ${compact(data.clause)} ซึ่งกำหนดให้ ${requirementDetail}`;
+        const conclusion = `จึงไม่เป็นไปตามข้อกำหนด${reference} ข้อ ${compact(data.clause)}`;
         currentText = `${requirement}\n\n${evidence}\n\n${conclusion}`;
 
         output.requirement.textContent = requirement;
